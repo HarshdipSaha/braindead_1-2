@@ -52,7 +52,7 @@ A hybrid extractive-abstractive model for summarizing scientific research papers
 
 ### Installation  
 
-###Clone the repository:  
+### Clone the repository:  
 ```bash
 git clone https://github.com/HARSHDIPSAHA/braindead_1-2.git
 cd braindead_1-2
@@ -110,3 +110,51 @@ bash
 ```
 cd ps2
 ```
+
+## How it works
+
+```mermaid
+flowchart TD
+  subgraph PS1["PS1 - IPL analysis (ps1/TEAM_deepakk63180_ps1.ipynb)"]
+    A["matches.csv + deliveries.csv"] --> B["Cleaning: city from venue map, fill dismissals and extras, drop rows without winner"]
+    B --> C["EDA: win %, run rates, boundaries, powerplay and death overs, Orange and Purple Cap, ydata-profiling output.html"]
+    C --> D["Features: team1, team2, venue, toss, head-to-head win rates, one-hot encoding"]
+    D --> E["StackingClassifier: RandomForest + XGBoost, LogisticRegression meta, GridSearchCV"]
+  end
+  subgraph PS2["PS2 - paper summarization (ps2/TEAM_deepakk63180_ps2.ipynb)"]
+    F["arvix_dataset.py: filter arXiv JSON 2023-25 to filtered_data.csv"] --> H["Cleaning: contractions, HTML strip, stopwords, drop nulls and duplicates"]
+    G["pubmed.py: pymed query to pubmed_articles.csv + CompScholar CSV"] --> H
+    H --> I["BartTokenizer max 512, abstract to title pairs"]
+    I --> J["Fine-tune facebook/bart-large 3 epochs on arXiv + PubMed, test on CompScholar, ROUGE"]
+  end
+```
+
+## Repository Structure
+
+```
+ps1/
+  TEAM_deepakk63180_ps1.ipynb   IPL cleaning, EDA and winner-prediction model
+  matches.csv, deliveries.csv   IPL 2008-2024 data
+  output.html                   ydata-profiling report of matches.csv
+ps2/
+  TEAM_deepakk63180_ps2.ipynb   dataset cleaning, length analysis, BART fine-tuning and ROUGE evaluation
+  arvix_dataset.py              builds filtered_data.csv from the arXiv metadata JSON (Kaggle link at the top of this README)
+  pubmed.py                     downloads PubMed abstracts for five topics via pymed
+  pubmed_articles.csv           output of pubmed.py
+  Brain Dead CompScholar Dataset.csv
+  1909.03186v2.pdf              reference paper
+```
+
+## Results (from saved notebook outputs)
+
+- PS1 stacking model (RF + XGBoost, LogisticRegression meta): test accuracy 0.595 with default estimators, 0.620 after GridSearchCV tuning (`ps1` notebook, cells near the end).
+- PS2: the ROUGE evaluation cell is present but its output is not saved in the committed notebook.
+
+## Status and limitations
+
+- Both problem statements live in single notebooks; there is no `notebooks/ipl_analysis.ipynb` or `notebooks/ipl_prediction.ipynb` as named above - open the `TEAM_deepakk63180_*.ipynb` files instead.
+- The committed PS2 notebook fine-tunes `facebook/bart-large`; the LED variant mentioned above is not in the committed code.
+- Some paths are hard-coded to the author's machine (`H:\braindead\...`, `H:\research paper\...`); edit them before running.
+esearch paper\...`); edit them before running.
+esearch paper\...`); edit them before running.
+- The pipeline for PS1 predicts per-match winners from pre-match features; there is no saved 2025 season simulation output in the notebook.
